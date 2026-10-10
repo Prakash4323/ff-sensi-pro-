@@ -1,0 +1,226 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#10121c">
+<title>FF Sensi Pro</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;padding:18px;
+  background:#10121c;color:#fff;
+  font-family:Arial,sans-serif;
+}
+header{text-align:center;padding:12px 0 22px}
+.logo{font-size:38px;font-weight:900;color:#ff4545}
+.sub{color:#b7bdce}
+.card{
+  background:#202438;border:1px solid #303650;
+  border-radius:18px;padding:18px;margin:14px 0;
+}
+h2{font-size:19px;margin:4px 0 16px}
+label{display:block;margin:12px 0 8px;color:#cbd1e2}
+select,input,button{font:inherit}
+select{
+  width:100%;padding:13px;border-radius:10px;
+  background:#101624;color:white;border:1px solid #454e6a;
+}
+.setting{padding:13px 0;border-bottom:1px solid #34394f}
+.setting:last-child{border:0}
+.line{display:flex;justify-content:space-between;align-items:center}
+.value{font-size:22px;font-weight:bold;color:#ff6269}
+input[type=range]{width:100%;accent-color:#ff4545;margin-top:14px}
+button{
+  border:0;border-radius:11px;padding:14px;
+  font-weight:bold;cursor:pointer;
+}
+.primary{background:#ff4545;color:white}
+.secondary{background:#303750;color:white}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.full{width:100%;margin-top:10px}
+.note{font-size:13px;color:#aeb6ca;line-height:1.6}
+footer{text-align:center;color:#9ca5bc;font-size:12px;padding:18px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🎮 FF SENSI PRO</div>
+  <p class="sub">Apni sensitivity khud set karo</p>
+</header>
+
+<div class="card">
+  <h2>📱 Apna Phone Chuno</h2>
+  <label for="phone">Phone category</label>
+  <select id="phone">
+    <option value="balanced">Normal Android</option>
+    <option value="entry">Entry-level Android</option>
+    <option value="gaming">Gaming Android</option>
+    <option value="custom">Custom Settings</option>
+  </select>
+  <p class="note">Phone category sirf starting suggestions ke liye hai.</p>
+  <button class="secondary full" id="preset">Suggested Settings Lagao</button>
+</div>
+
+<div class="card">
+  <h2>🎯 Sensitivity Settings</h2>
+  <div id="settings"></div>
+  <div class="buttons">
+    <button class="primary" id="save">💾 Save Settings</button>
+    <button class="secondary" id="copy">📋 Copy Settings</button>
+  </div>
+  <button class="secondary full" id="reset">↺ Reset Settings</button>
+  <p id="message" class="note" aria-live="polite"></p>
+</div>
+
+<div class="card">
+  <h2>💡 Chhota sa Tip</h2>
+  <p class="note">
+    Training ground mein settings test karo. Ek baar mein ek hi
+    slider badlo. Sahi setting tumhare control aur practice par
+    depend karti hai. Ye app game ko automatically control nahi karti.
+  </p>
+</div>
+
+<footer>FF SENSI PRO • Fan-made sensitivity helper</footer>
+
+<script>
+const defaults = {
+  general:180, red:170, scope2:160,
+  scope4:145, sniper:100, free:150
+};
+
+const names = {
+  general:"General",
+  red:"Red Dot",
+  scope2:"2x Scope",
+  scope4:"4x Scope",
+  sniper:"Sniper Scope",
+  free:"Free Look"
+};
+
+const presets = {
+  balanced:[180,170,160,145,100,150],
+  entry:[175,165,150,135,90,140],
+  gaming:[185,175,165,150,105,155]
+};
+
+let values = {...defaults};
+const settings = document.getElementById("settings");
+const phone = document.getElementById("phone");
+const message = document.getElementById("message");
+
+function render(){
+  settings.innerHTML = "";
+  Object.keys(names).forEach(key => {
+    const item = document.createElement("div");
+    item.className = "setting";
+
+    const line = document.createElement("div");
+    line.className = "line";
+
+    const title = document.createElement("strong");
+    title.textContent = names[key];
+
+    const number = document.createElement("span");
+    number.className = "value";
+    number.textContent = values[key];
+
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.min = "0";
+    slider.max = "200";
+    slider.step = "1";
+    slider.value = values[key];
+    slider.setAttribute("aria-label", names[key]);
+
+    slider.addEventListener("input", () => {
+      values[key] = Number(slider.value);
+      number.textContent = slider.value;
+      phone.value = "custom";
+    });
+
+    line.append(title, number);
+    item.append(line, slider);
+    settings.append(item);
+  });
+}
+
+function applyPreset(){
+  const list = presets[phone.value];
+  if(!list){
+    message.textContent = "Custom mode: sliders ko apne hisaab se badlo.";
+    return;
+  }
+  Object.keys(names).forEach((key,i) => values[key] = list[i]);
+  render();
+  message.textContent = "Suggested values dikhayi gayi hain.";
+}
+
+phone.addEventListener("change", applyPreset);
+document.getElementById("preset").addEventListener("click", applyPreset);
+
+document.getElementById("save").addEventListener("click", () => {
+  try{
+    localStorage.setItem("ffSensiSettings", JSON.stringify({
+      values, phone:phone.value
+    }));
+    message.textContent = "Settings is browser mein save ho gayi!";
+  }catch(e){
+    message.textContent = "Save nahi hua. Browser storage check karo.";
+  }
+});
+
+function settingsText(){
+  return "FF SENSI PRO\nPhone: " + phone.options[phone.selectedIndex].text +
+    "\n" + Object.keys(names).map(key =>
+      names[key] + ": " + values[key]
+    ).join("\n");
+}
+
+document.getElementById("copy").addEventListener("click", async () => {
+  const text = settingsText();
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(text);
+    }else{
+      const area = document.createElement("textarea");
+      area.value = text;
+      document.body.appendChild(area);
+      area.select();
+      const ok = document.execCommand("copy");
+      area.remove();
+      if(!ok) throw new Error("Copy unavailable");
+    }
+    message.textContent = "Settings copy ho gayi!";
+  }catch(e){
+    message.textContent = "Copy nahi hua. Settings ko select karke copy karo.";
+  }
+});
+
+document.getElementById("reset").addEventListener("click", () => {
+  values = {...defaults};
+  phone.value = "balanced";
+  render();
+  message.textContent = "Default values wapas aa gayi hain.";
+});
+
+try{
+  const saved = JSON.parse(localStorage.getItem("ffSensiSettings"));
+  if(saved && saved.values){
+    Object.keys(names).forEach(key => {
+      const n = Number(saved.values[key]);
+      if(Number.isFinite(n)) values[key] = Math.max(0,Math.min(200,n));
+    });
+    if(["balanced","entry","gaming","custom"].includes(saved.phone)){
+      phone.value = saved.phone;
+    }
+  }
+}catch(e){}
+
+render();
+</script>
+</body>
+</html>
+
